@@ -1,4 +1,3 @@
-<!-- public/index.html (Sign In Page) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,22 +6,70 @@
     <title>GLAlearning - Sign In</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .loading-spinner {
+            display: none;
+        }
+        .error-message {
+            display: none;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 2rem;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            background: white;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h2 class="text-center">Student Sign In</h2>
-        <form id="signinForm" class="mt-4">
-            <div class="mb-3">
-                <label for="glaNumber" class="form-label">GLA Number</label>
-                <input type="text" class="form-control" id="glaNumber" required>
+    <div class="container">
+        <div class="login-container">
+            <div class="text-center mb-4">
+                <h1 class="h3 mb-3 fw-normal text-primary">GLAlearning</h1>
+                <h2 class="h5 text-muted">Student Portal</h2>
             </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-control" id="password" required>
+            
+            <div class="error-message alert alert-danger" id="errorMessage"></div>
+            
+            <form id="signinForm">
+                <div class="mb-3">
+                    <label for="glaNumber" class="form-label">GLA Number</label>
+                    <input type="text" class="form-control" id="glaNumber" required 
+                           placeholder="Enter your GLA number" autocomplete="username">
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" required 
+                           placeholder="Enter your password" autocomplete="current-password">
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="rememberMe">
+                    <label class="form-check-label" for="rememberMe">
+                        Remember me
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mb-3" id="signInBtn">
+                    <span class="loading-spinner spinner-border spinner-border-sm me-2"></span>
+                    Sign In
+                </button>
+            </form>
+            
+            <div class="text-center">
+                <a href="#" class="text-decoration-none" id="forgotPassword">Forgot Password?</a>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Sign In</button>
-        </form>
-        <p class="text-center mt-3">Don't have an account? Contact admin for enrollment.</p>
+            
+            <p class="text-center mt-4 text-muted small">
+                Need help? Contact your administrator or IT support.
+            </p>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
@@ -30,15 +77,86 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
     <script src="app.js"></script>
     <script>
-        // Sign In Logic
-        document.getElementById('signinForm').addEventListener('submit', (e) => {
+        // Enhanced Sign In Logic
+        document.getElementById('signinForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const glaNumber = document.getElementById('glaNumber').value;
+            
+            const glaNumber = document.getElementById('glaNumber').value.trim();
             const password = document.getElementById('password').value;
-            const email = `${glaNumber}@glalearning.com`;
-            auth.signInWithEmailAndPassword(email, password)
-                .then(() => {}) // Redirect handled in app.js
-                .catch(error => alert(error.message));
+            const signInBtn = document.getElementById('signInBtn');
+            const spinner = document.querySelector('.loading-spinner');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Validation
+            if (!glaNumber || !password) {
+                showError('Please fill in all fields');
+                return;
+            }
+            
+            // Show loading state
+            signInBtn.disabled = true;
+            spinner.style.display = 'inline-block';
+            errorMessage.style.display = 'none';
+            
+            try {
+                const email = `${glaNumber}@glalearning.com`;
+                await auth.signInWithEmailAndPassword(email, password);
+                
+                // Remember me functionality
+                if (document.getElementById('rememberMe').checked) {
+                    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+                }
+                
+            } catch (error) {
+                console.error('Sign in error:', error);
+                let errorMsg = 'Invalid GLA number or password';
+                
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        errorMsg = 'No account found with this GLA number';
+                        break;
+                    case 'auth/wrong-password':
+                        errorMsg = 'Incorrect password';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMsg = 'Too many failed attempts. Please try again later';
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMsg = 'Network error. Please check your connection';
+                        break;
+                }
+                
+                showError(errorMsg);
+            } finally {
+                // Reset loading state
+                signInBtn.disabled = false;
+                spinner.style.display = 'none';
+            }
+        });
+        
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+        
+        // Forgot Password functionality
+        document.getElementById('forgotPassword').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const glaNumber = document.getElementById('glaNumber').value.trim();
+            
+            if (!glaNumber) {
+                showError('Please enter your GLA number first');
+                return;
+            }
+            
+            try {
+                const email = `${glaNumber}@glalearning.com`;
+                await auth.sendPasswordResetEmail(email);
+                alert('Password reset email sent! Check your email.');
+            } catch (error) {
+                showError('Error sending password reset email. Contact admin.');
+            }
         });
     </script>
 </body>

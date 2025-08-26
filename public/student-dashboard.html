@@ -1,111 +1,1020 @@
-<!-- public/student-dashboard.html (Student Dashboard Page) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GLAlearning - Student Dashboard</title>
+    <title>GLAlearning - My Learning Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .course-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .progress-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(#28a745 var(--progress), #e9ecef var(--progress));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .progress-circle::before {
+            content: '';
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+        }
+        .progress-text {
+            position: relative;
+            z-index: 1;
+            font-weight: bold;
+            color: #333;
+        }
+        .learning-module {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .learning-module.completed {
+            border-color: #28a745;
+            background-color: #f8fff9;
+        }
+        .learning-module.active {
+            border-color: #007bff;
+            background-color: #f8f9ff;
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            margin-bottom: 1rem;
+        }
+        .video-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+        }
+        .chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            max-height: 500px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+        }
+        .chatbot-header {
+            background: #007bff;
+            color: white;
+            padding: 1rem;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        .chat-input-container {
+            padding: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .chat-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #007bff;
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,123,255,0.3);
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+        .chat-toggle:hover {
+            transform: scale(1.1);
+        }
+        .achievement-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #ffd700;
+            color: #333;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin: 0.25rem;
+        }
+        .quiz-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">GLAlearning</a>
+            <a class="navbar-brand" href="#">
+                <strong>GLAlearning</strong> Student Portal
+            </a>
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="#" id="logoutBtn">Logout</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <span id="studentName">Student</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="showProfile()">My Profile</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="showProgress()">Progress Report</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
+                        </ul>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-5">
-        <h2 id="welcomeMsg" class="text-center"></h2>
-        <div id="enrollmentSection" class="course-section">
-            <h3>Enroll in a Course</h3>
-            <p>Select a course to apply for enrollment. Admin will approve.</p>
-            <button class="btn btn-primary" id="applyPython">Apply for Coding with Python</button>
-            <button class="btn btn-primary" id="applyAI">Apply for Using AI to Code</button>
-        </div>
-        <div id="courseContent" class="course-section hidden">
-            <h3 id="courseTitle"></h3>
-            <div id="videosSection">
-                <h4>Videos</h4>
-                <video class="video-player" controls>
-                    <source src="path/to/video.mp4" type="video/mp4">
-                </video>
-                <button class="btn btn-success mt-2" id="markVideosDone">Mark Videos as Done</button>
-            </div>
-            <div id="tutorialsSection" class="hidden">
-                <h4>Tutorials</h4>
-                <p>Complete the following tutorials...</p>
-                <button class="btn btn-success mt-2" id="markTutorialsDone">Mark Tutorials as Done</button>
-            </div>
-            <div id="testSection" class="hidden">
-                <h4>Test</h4>
-                <form id="testForm">
-                    <div class="mb-3">
-                        <label for="q1">Question 1: What is Python?</label>
-                        <input id="q1" name="question1" type="text" class="form-control" placeholder="Type your answer here" title="Answer to Question 1" aria-label="Answer to Question 1">
+    <div class="container-fluid mt-4">
+        <!-- Welcome Section -->
+        <div class="course-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 id="welcomeMsg">Welcome Back!</h1>
+                    <h3 id="courseTitle">Loading your course...</h3>
+                    <p class="mb-0" id="courseDescription">Continue your learning journey</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="progress-circle" id="progressCircle" style="--progress: 0%">
+                        <span class="progress-text" id="progressText">0%</span>
                     </div>
-                    <button type="submit" class="btn btn-primary">Submit Test</button>
-                </form>
+                    <div class="mt-2">
+                        <small>Overall Progress</small>
+                    </div>
+                </div>
             </div>
-            <div id="scoresSection" class="mt-4">
-                <h4>Your Scores</h4>
-                <p id="scoreDisplay"></p>
+        </div>
+
+        <!-- Course Not Assigned Message -->
+        <div id="noCourseMessage" class="text-center py-5" style="display: none;">
+            <div class="card">
+                <div class="card-body">
+                    <h4>No Course Assigned</h4>
+                    <p class="text-muted">Please contact your administrator to get assigned to a course.</p>
+                    <div class="mt-4">
+                        <h5>Available Courses:</h5>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h6>🐍 Coding with Python</h6>
+                                        <p class="small text-muted">Learn programming fundamentals</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h6>🤖 Using AI to Code</h6>
+                                        <p class="small text-muted">Modern AI-assisted development</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="chatbot mt-4">
-                <div id="chatMessages"></div>
-                <input type="text" id="chatInput" placeholder="Ask a question...">
-                <button id="sendChat">Send</button>
+        </div>
+
+        <!-- Course Content -->
+        <div id="courseContent" style="display: none;">
+            <!-- Module 1: Videos -->
+            <div class="learning-module" id="videosModule">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4><span class="badge bg-primary me-2">1</span>Watch Video Lectures</h4>
+                    <div>
+                        <span class="badge bg-secondary" id="videoStatus">Not Started</span>
+                    </div>
+                </div>
+                
+                <div id="videosSection">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="video-container">
+                                <video class="video-player" controls id="mainVideo">
+                                    <source src="https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4" type="video/mp4">
+                                    <p>Your browser doesn't support HTML5 video. Here's a <a href="https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4">link to the video</a> instead.</p>
+                                </video>
+                            </div>
+                            <div class="video-controls">
+                                <button class="btn btn-outline-secondary btn-sm me-2" onclick="changePlaybackSpeed()">Speed: 1x</button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="toggleFullscreen()">Fullscreen</button>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <h6>Video Playlist</h6>
+                            <div class="list-group" id="videoPlaylist">
+                                <a href="#" class="list-group-item list-group-item-action active" onclick="loadVideo(0)">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Introduction</h6>
+                                        <small>5:30</small>
+                                    </div>
+                                    <p class="mb-1">Course overview and objectives</p>
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action" onclick="loadVideo(1)">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Fundamentals</h6>
+                                        <small>12:45</small>
+                                    </div>
+                                    <p class="mb-1">Basic concepts and terminology</p>
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action" onclick="loadVideo(2)">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Practical Examples</h6>
+                                        <small>18:20</small>
+                                    </div>
+                                    <p class="mb-1">Real-world applications</p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-center">
+                        <div class="progress mb-3">
+                            <div class="progress-bar" id="videoProgress" style="width: 0%">0% Complete</div>
+                        </div>
+                        <button class="btn btn-success btn-lg" id="markVideosDone">
+                            <span class="spinner-border spinner-border-sm d-none me-2"></span>
+                            Complete Video Module
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Module 2: Tutorials -->
+            <div class="learning-module" id="tutorialsModule" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4><span class="badge bg-warning me-2">2</span>Interactive Tutorials</h4>
+                    <div>
+                        <span class="badge bg-secondary" id="tutorialStatus">Locked</span>
+                    </div>
+                </div>
+                
+                <div id="tutorialsSection">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">📝 Practice Exercises</h5>
+                                    <p class="card-text">Complete hands-on coding exercises to reinforce your learning.</p>
+                                    <div class="progress mb-3">
+                                        <div class="progress-bar bg-warning" style="width: 0%" id="exerciseProgress">0/5 Complete</div>
+                                    </div>
+                                    <button class="btn btn-warning" onclick="startExercises()">Start Exercises</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">🔬 Lab Activities</h5>
+                                    <p class="card-text">Apply concepts in realistic scenarios and projects.</p>
+                                    <div class="progress mb-3">
+                                        <div class="progress-bar bg-info" style="width: 0%" id="labProgress">0/3 Complete</div>
+                                    </div>
+                                    <button class="btn btn-info" onclick="startLabs()">Start Labs</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-center">
+                        <button class="btn btn-success btn-lg" id="markTutorialsDone" disabled>
+                            <span class="spinner-border spinner-border-sm d-none me-2"></span>
+                            Complete Tutorial Module
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Module 3: Assessment -->
+            <div class="learning-module" id="testModule" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4><span class="badge bg-danger me-2">3</span>Final Assessment</h4>
+                    <div>
+                        <span class="badge bg-secondary" id="testStatus">Locked</span>
+                    </div>
+                </div>
+                
+                <div id="testSection">
+                    <div class="alert alert-info">
+                        <strong>Assessment Instructions:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>You have 60 minutes to complete the test</li>
+                            <li>Each question carries equal marks</li>
+                            <li>You can attempt the test only once</li>
+                            <li>Minimum passing score is 70%</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="quiz-container" id="quizContainer" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5>Assessment Questions</h5>
+                            <div class="badge bg-primary">Time Remaining: <span id="timeRemaining">60:00</span></div>
+                        </div>
+                        
+                        <form id="testForm">
+                            <div class="question-container mb-4">
+                                <h6>Question 1 of 5</h6>
+                                <p>What is Python primarily used for?</p>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="q1" value="a" id="q1a">
+                                    <label class="form-check-label" for="q1a">Web development only</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="q1" value="b" id="q1b">
+                                    <label class="form-check-label" for="q1b">Data science, web development, automation, and more</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="q1" value="c" id="q1c">
+                                    <label class="form-check-label" for="q1c">Gaming only</label>
+                                </div>
+                            </div>
+                            
+                            <div class="question-container mb-4">
+                                <h6>Question 2 of 5</h6>
+                                <p>Which of the following is a Python data type?</p>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="q2" value="a" id="q2a">
+                                    <label class="form-check-label" for="q2a">List</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="q2" value="b" id="q2b">
+                                    <label class="form-check-label" for="q2b">Dictionary</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="q2" value="c" id="q2c">
+                                    <label class="form-check-label" for="q2c">Both List and Dictionary</label>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-danger btn-lg">Submit Assessment</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="text-center" id="startTestSection">
+                        <button class="btn btn-danger btn-lg" id="startTestBtn">Start Assessment</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="mt-4" style="display: none;">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">🎉 Congratulations!</h4>
+                    </div>
+                    <div class="card-body text-center">
+                        <h2 class="text-success mb-3">Course Completed!</h2>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h5>Final Score</h5>
+                                <h3 class="text-primary" id="finalScore">0%</h3>
+                            </div>
+                            <div class="col-md-4">
+                                <h5>Grade</h5>
+                                <h3 class="text-success" id="finalGrade">A</h3>
+                            </div>
+                            <div class="col-md-4">
+                                <h5>Status</h5>
+                                <h3 class="text-success" id="completionStatus">Passed</h3>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h5>Achievements Unlocked</h5>
+                            <div id="achievements">
+                                <span class="achievement-badge">🎥 Video Master</span>
+                                <span class="achievement-badge">📚 Tutorial Champion</span>
+                                <span class="achievement-badge">🏆 Course Graduate</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button class="btn btn-primary me-2" onclick="downloadCertificate()">Download Certificate</button>
+                            <button class="btn btn-secondary" onclick="shareProgress()">Share Achievement</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- AI Tutor Chat -->
+    <button class="chat-toggle" id="chatToggle" onclick="toggleChat()">💬</button>
+    
+    <div class="chatbot-container" id="chatContainer">
+        <div class="chatbot-header">
+            <span><strong>🤖 AI Tutor</strong></span>
+            <button class="btn-close btn-close-white" onclick="toggleChat()"></button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="mb-2">
+                <small class="text-muted">AI Tutor</small>
+                <div class="bg-light p-2 rounded">
+                    Hi! I'm your AI learning assistant. Ask me any questions about the course content!
+                </div>
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <input type="text" class="form-control" id="chatInput" placeholder="Ask a question..." 
+                   onkeypress="handleChatKeypress(event)">
+            <button class="btn btn-primary" id="sendChat" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
     <script src="app.js"></script>
     <script>
-        // Student Specific Logic
+        let currentUser = null;
+        let currentCourse = null;
+        let testTimer = null;
+        let videoWatchTime = {};
+        
+        // Student Authentication and Initialization
         auth.onAuthStateChanged(user => {
-            if (!user) return window.location.href = '/index.html';
+            if (!user) {
+                window.location.href = '/index.html';
+                return;
+            }
+            
+            currentUser = user;
             checkUserRole(user.uid, 'student');
-            loadStudentCourse(user.uid);
+            loadStudentDashboard(user.uid);
         });
 
-        document.getElementById('applyPython').addEventListener('click', () => applyCourse('Coding with Python'));
-        document.getElementById('applyAI').addEventListener('click', () => applyCourse('Using AI to Code'));
-
-        document.getElementById('markVideosDone').addEventListener('click', () => {
-            const uid = auth.currentUser.uid;
-            db.collection('users').doc(uid).update({ 'progress.videosDone': true });
-            document.getElementById('tutorialsSection').classList.remove('hidden');
+        async function loadStudentDashboard(uid) {
+            try {
+                const userDoc = await db.collection('users').doc(uid).get();
+                
+                if (!userDoc.exists) {
+                    alert('User profile not found. Please contact admin.');
+                    auth.signOut();
+                    return;
+                }
+                
+                const userData = userDoc.data();
+                currentCourse = userData.approvedCourse;
+                
+                // Update welcome message
+                document.getElementById('studentName').textContent = userData.name || userData.glaNumber;
+                document.getElementById('welcomeMsg').textContent = `Welcome back, ${userData.name || 'Student'}!`;
+                
+                if (!currentCourse) {
+                    document.getElementById('noCourseMessage').style.display = 'block';
+                    return;
+                }
+                
+                // Load course content
+                document.getElementById('courseTitle').textContent = currentCourse;
+                document.getElementById('courseContent').style.display = 'block';
+                
+                // Set course description based on course
+                setCourseDescription(currentCourse);
+                
+                // Load progress
+                loadProgress(userData.progress || {}, userData.score);
+                
+                // Update last login
+                await db.collection('users').doc(uid).update({
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                alert('Error loading your dashboard. Please try again.');
+            }
+        }
+        
+        function setCourseDescription(course) {
+            const descriptions = {
+                'Coding with Python': 'Master the fundamentals of Python programming',
+                'Using AI to Code': 'Learn modern AI-assisted development techniques',
+                'Web Development': 'Build dynamic websites and web applications',
+                'Data Science': 'Analyze data and build predictive models'
+            };
+            
+            document.getElementById('courseDescription').textContent = 
+                descriptions[course] || 'Continue your learning journey';
+        }
+        
+        function loadProgress(progress, score) {
+            const videosDone = progress.videosDone || false;
+            const tutorialsDone = progress.tutorialsDone || false;
+            const testDone = progress.testDone || false;
+            
+            // Update progress circle
+            let overallProgress = 0;
+            if (videosDone) overallProgress += 33;
+            if (tutorialsDone) overallProgress += 33;
+            if (testDone) overallProgress += 34;
+            
+            updateProgressCircle(overallProgress);
+            
+            // Update module states
+            updateModuleState('videosModule', videosDone, 'videoStatus');
+            updateModuleState('tutorialsModule', tutorialsDone, 'tutorialStatus', videosDone);
+            updateModuleState('testModule', testDone, 'testStatus', tutorialsDone);
+            
+            // Show appropriate sections
+            if (videosDone) {
+                document.getElementById('tutorialsModule').style.display = 'block';
+            }
+            if (tutorialsDone) {
+                document.getElementById('testModule').style.display = 'block';
+            }
+            if (testDone && score) {
+                showResults(score);
+            }
+        }
+        
+        function updateProgressCircle(percentage) {
+            const circle = document.getElementById('progressCircle');
+            const text = document.getElementById('progressText');
+            
+            circle.style.setProperty('--progress', `${percentage}%`);
+            text.textContent = `${Math.round(percentage)}%`;
+        }
+        
+        function updateModuleState(moduleId, completed, statusId, unlocked = true) {
+            const module = document.getElementById(moduleId);
+            const status = document.getElementById(statusId);
+            
+            if (completed) {
+                module.classList.add('completed');
+                status.textContent = 'Completed';
+                status.className = 'badge bg-success';
+            } else if (unlocked) {
+                module.classList.add('active');
+                status.textContent = 'In Progress';
+                status.className = 'badge bg-primary';
+            } else {
+                status.textContent = 'Locked';
+                status.className = 'badge bg-secondary';
+            }
+        }
+        
+        // Video functionality
+        let currentVideoIndex = 0;
+        const videos = [
+            { title: 'Introduction', duration: '5:30', url: 'video1.mp4' },
+            { title: 'Fundamentals', duration: '12:45', url: 'video2.mp4' },
+            { title: 'Practical Examples', duration: '18:20', url: 'video3.mp4' }
+        ];
+        
+        function loadVideo(index) {
+            currentVideoIndex = index;
+            const playlist = document.querySelectorAll('#videoPlaylist .list-group-item');
+            playlist.forEach((item, i) => {
+                item.classList.toggle('active', i === index);
+            });
+            
+            // In a real implementation, you'd load the actual video URL
+            updateVideoProgress();
+        }
+        
+        function updateVideoProgress() {
+            const watchedVideos = Object.keys(videoWatchTime).length;
+            const totalVideos = videos.length;
+            const percentage = Math.round((watchedVideos / totalVideos) * 100);
+            
+            const progressBar = document.getElementById('videoProgress');
+            progressBar.style.width = `${percentage}%`;
+            progressBar.textContent = `${percentage}% Complete`;
+            
+            // Enable completion button when all videos watched
+            if (percentage === 100) {
+                document.getElementById('markVideosDone').disabled = false;
+            }
+        }
+        
+        // Track video watching
+        document.getElementById('mainVideo').addEventListener('timeupdate', function(e) {
+            const video = e.target;
+            const videoId = `video_${currentVideoIndex}`;
+            
+            if (!videoWatchTime[videoId]) {
+                videoWatchTime[videoId] = 0;
+            }
+            
+            videoWatchTime[videoId] = Math.max(videoWatchTime[videoId], video.currentTime);
+            
+            // Mark as watched if 90% completed
+            if (video.currentTime / video.duration > 0.9) {
+                videoWatchTime[videoId] = 'completed';
+                updateVideoProgress();
+            }
         });
-
-        document.getElementById('markTutorialsDone').addEventListener('click', () => {
-            const uid = auth.currentUser.uid;
-            db.collection('users').doc(uid).update({ 'progress.tutorialsDone': true });
-            document.getElementById('testSection').classList.remove('hidden');
+        
+        // Module completion handlers
+        document.getElementById('markVideosDone').addEventListener('click', async () => {
+            await updateProgress('videosDone', true);
+            document.getElementById('tutorialsModule').style.display = 'block';
+            updateModuleState('tutorialsModule', false, 'tutorialStatus', true);
         });
-
-        document.getElementById('testForm').addEventListener('submit', (e) => {
+        
+        document.getElementById('markTutorialsDone').addEventListener('click', async () => {
+            await updateProgress('tutorialsDone', true);
+            document.getElementById('testModule').style.display = 'block';
+            updateModuleState('testModule', false, 'testStatus', true);
+        });
+        
+        async function updateProgress(field, value) {
+            try {
+                const updateData = {};
+                updateData[`progress.${field}`] = value;
+                
+                await db.collection('users').doc(currentUser.uid).update(updateData);
+                
+                // Reload progress
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                const userData = userDoc.data();
+                loadProgress(userData.progress || {}, userData.score);
+                
+            } catch (error) {
+                console.error('Error updating progress:', error);
+                alert('Error saving progress. Please try again.');
+            }
+        }
+        
+        // Assessment functionality
+        document.getElementById('startTestBtn').addEventListener('click', () => {
+            document.getElementById('startTestSection').style.display = 'none';
+            document.getElementById('quizContainer').style.display = 'block';
+            startTimer(60 * 60); // 60 minutes
+        });
+        
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const uid = auth.currentUser.uid;
-            const score = Math.floor(Math.random() * 100); // Placeholder
-            db.collection('users').doc(uid).update({ score });
-            document.getElementById('scoreDisplay').textContent = `Test Score: ${score}`;
-            alert('Test submitted! Score: ' + score);
+            
+            if (testTimer) {
+                clearInterval(testTimer);
+            }
+            
+            // Calculate score
+            const formData = new FormData(e.target);
+            const answers = {
+                q1: 'b', // Correct answers
+                q2: 'c'
+            };
+            
+            let correct = 0;
+            let total = Object.keys(answers).length;
+            
+            for (const [question, correctAnswer] of Object.entries(answers)) {
+                if (formData.get(question) === correctAnswer) {
+                    correct++;
+                }
+            }
+            
+            const score = Math.round((correct / total) * 100);
+            
+            try {
+                await db.collection('users').doc(currentUser.uid).update({ 
+                    score,
+                    'progress.testDone': true,
+                    completedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                showResults(score);
+                
+            } catch (error) {
+                console.error('Error submitting test:', error);
+                alert('Error submitting test. Please try again.');
+            }
         });
-
-        document.getElementById('sendChat').addEventListener('click', () => {
-            const input = document.getElementById('chatInput').value;
+        
+        function startTimer(seconds) {
+            let timeRemaining = seconds;
+            const timerDisplay = document.getElementById('timeRemaining');
+            
+            testTimer = setInterval(() => {
+                const minutes = Math.floor(timeRemaining / 60);
+                const secs = timeRemaining % 60;
+                
+                timerDisplay.textContent = `${minutes}:${secs.toString().padStart(2, '0')}`;
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(testTimer);
+                    document.getElementById('testForm').dispatchEvent(new Event('submit'));
+                }
+                
+                timeRemaining--;
+            }, 1000);
+        }
+        
+        function showResults(score) {
+            document.getElementById('testModule').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            document.getElementById('finalScore').textContent = `${score}%`;
+            
+            let grade, status;
+            if (score >= 90) {
+                grade = 'A';
+                status = 'Excellent';
+            } else if (score >= 80) {
+                grade = 'B';
+                status = 'Good';
+            } else if (score >= 70) {
+                grade = 'C';
+                status = 'Passed';
+            } else {
+                grade = 'D';
+                status = 'Failed';
+                document.querySelector('#resultsSection .card-header').classList.remove('bg-success');
+                document.querySelector('#resultsSection .card-header').classList.add('bg-danger');
+            }
+            
+            document.getElementById('finalGrade').textContent = grade;
+            document.getElementById('completionStatus').textContent = status;
+            
+            updateProgressCircle(100);
+        }
+        
+        // Chat functionality
+        function toggleChat() {
+            const container = document.getElementById('chatContainer');
+            const toggle = document.getElementById('chatToggle');
+            
+            if (container.style.display === 'none' || !container.style.display) {
+                container.style.display = 'block';
+                toggle.style.display = 'none';
+            } else {
+                container.style.display = 'none';
+                toggle.style.display = 'block';
+            }
+        }
+        
+        function handleChatKeypress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
             const messages = document.getElementById('chatMessages');
-            messages.innerHTML += `<p><strong>You:</strong> ${input}</p>`;
-            messages.innerHTML += `<p><strong>Bot:</strong> Placeholder. Integrate xAI API: https://x.ai/api</p>`;
-            document.getElementById('chatInput').value = '';
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addChatMessage('You', message, 'user');
+            input.value = '';
+            
+            // Show typing indicator
+            addChatMessage('AI Tutor', 'Typing...', 'bot', true);
+            
+            // Simulate AI response (replace with actual AI API call)
+            setTimeout(() => {
+                removeChatMessage(); // Remove typing indicator
+                const response = generateAIResponse(message);
+                addChatMessage('AI Tutor', response, 'bot');
+            }, 1500);
+        }
+        
+        function addChatMessage(sender, message, type, isTyping = false) {
+            const messages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-2 ${isTyping ? 'typing-indicator' : ''}`;
+            
+            messageDiv.innerHTML = `
+                <small class="text-muted">${sender}</small>
+                <div class="bg-${type === 'user' ? 'primary text-white' : 'light'} p-2 rounded">
+                    ${message}
+                </div>
+            `;
+            
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+        function removeChatMessage() {
+            const typingIndicator = document.querySelector('.typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+        
+        function generateAIResponse(message) {
+            const responses = {
+                'python': 'Python is a versatile programming language great for beginners. It\'s used in web development, data science, AI, and automation!',
+                'help': 'I\'m here to help! You can ask me about course content, programming concepts, or if you\'re stuck on any topic.',
+                'score': 'You can check your current progress and scores in the modules above. Keep learning to improve your performance!',
+                'video': 'Make sure to watch all videos completely. You can pause, rewind, and take notes. The video progress is tracked automatically.',
+                'test': 'The final assessment tests your understanding of all course materials. Make sure you\'ve completed videos and tutorials first!'
+            };
+            
+            const lowerMessage = message.toLowerCase();
+            
+            for (const [key, response] of Object.entries(responses)) {
+                if (lowerMessage.includes(key)) {
+                    return response;
+                }
+            }
+            
+            return `That's a great question about "${message}"! For detailed explanations, please review the course materials or contact your instructor for specific help.`;
+        }
+        
+        // Tutorial functions
+        function startExercises() {
+            alert('Starting interactive coding exercises...\n\nIn a full implementation, this would open an integrated code editor with step-by-step exercises.');
+            
+            // Simulate exercise completion
+            setTimeout(() => {
+                updateExerciseProgress(5, 5);
+            }, 2000);
+        }
+        
+        function startLabs() {
+            alert('Opening lab environment...\n\nThis would typically open project-based activities where you apply your knowledge.');
+            
+            // Simulate lab completion
+            setTimeout(() => {
+                updateLabProgress(3, 3);
+            }, 3000);
+        }
+        
+        function updateExerciseProgress(completed, total) {
+            const progress = document.getElementById('exerciseProgress');
+            const percentage = Math.round((completed / total) * 100);
+            
+            progress.style.width = `${percentage}%`;
+            progress.textContent = `${completed}/${total} Complete`;
+            
+            checkTutorialCompletion();
+        }
+        
+        function updateLabProgress(completed, total) {
+            const progress = document.getElementById('labProgress');
+            const percentage = Math.round((completed / total) * 100);
+            
+            progress.style.width = `${percentage}%`;
+            progress.textContent = `${completed}/${total} Complete`;
+            
+            checkTutorialCompletion();
+        }
+        
+        function checkTutorialCompletion() {
+            const exerciseProgress = document.getElementById('exerciseProgress').textContent;
+            const labProgress = document.getElementById('labProgress').textContent;
+            
+            if (exerciseProgress.includes('5/5') && labProgress.includes('3/3')) {
+                document.getElementById('markTutorialsDone').disabled = false;
+            }
+        }
+        
+        // Additional utility functions
+        function changePlaybackSpeed() {
+            const video = document.getElementById('mainVideo');
+            const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+            const currentSpeed = video.playbackRate;
+            const currentIndex = speeds.indexOf(currentSpeed);
+            const nextIndex = (currentIndex + 1) % speeds.length;
+            
+            video.playbackRate = speeds[nextIndex];
+            event.target.textContent = `Speed: ${speeds[nextIndex]}x`;
+        }
+        
+        function toggleFullscreen() {
+            const video = document.getElementById('mainVideo');
+            
+            if (video.requestFullscreen) {
+                video.requestFullscreen();
+            } else if (video.webkitRequestFullscreen) {
+                video.webkitRequestFullscreen();
+            }
+        }
+        
+        function showProfile() {
+            alert('Profile management would open here.\n\nStudents could update their information, change passwords, and view their learning history.');
+        }
+        
+        function showProgress() {
+            const progress = `
+Learning Progress Report:
+
+📊 Overall Progress: ${document.getElementById('progressText').textContent}
+📹 Videos: ${document.getElementById('videoStatus').textContent}
+📚 Tutorials: ${document.getElementById('tutorialStatus').textContent}
+📝 Assessment: ${document.getElementById('testStatus').textContent}
+
+${document.getElementById('finalScore') ? 'Final Score: ' + document.getElementById('finalScore').textContent : ''}
+            `;
+            
+            alert(progress);
+        }
+        
+        function downloadCertificate() {
+            alert('🎓 Certificate download would start here!\n\nIn a full implementation, this would generate a PDF certificate with the student\'s name, course completion details, and official signatures.');
+        }
+        
+        function shareProgress() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'GLAlearning Achievement',
+                    text: `I just completed ${currentCourse} with a score of ${document.getElementById('finalScore').textContent}!`,
+                    url: window.location.href
+                });
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                const text = `I just completed ${currentCourse} on GLAlearning with a score of ${document.getElementById('finalScore').textContent}! 🎉`;
+                
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text);
+                    alert('Achievement text copied to clipboard! Share it on your social media.');
+                } else {
+                    alert('Share this achievement:\n\n' + text);
+                }
+            }
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Space bar to play/pause video
+            if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                const video = document.getElementById('mainVideo');
+                if (video.paused) {
+                    video.play();
+                } else {
+                    video.pause();
+                }
+            }
+            
+            // Arrow keys for video navigation
+            if (e.code === 'ArrowLeft' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                const video = document.getElementById('mainVideo');
+                video.currentTime = Math.max(0, video.currentTime - 10);
+            }
+            
+            if (e.code === 'ArrowRight' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                const video = document.getElementById('mainVideo');
+                video.currentTime = Math.min(video.duration, video.currentTime + 10);
+            }
+        });
+        
+        // Auto-save progress periodically
+        setInterval(() => {
+            if (currentUser && currentCourse) {
+                // Auto-save watch time and other progress indicators
+                // This would be more sophisticated in a real implementation
+                console.log('Auto-saving progress...');
+            }
+        }, 30000); // Save every 30 seconds
+        
+        // Initialize tooltips and other Bootstrap components
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Bootstrap tooltips if any
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            const tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
         });
     </script>
 </body>

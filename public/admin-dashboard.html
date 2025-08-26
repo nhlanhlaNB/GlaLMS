@@ -1,4 +1,3 @@
-<!-- public/admin-dashboard.html (Admin Dashboard Page) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,57 +6,194 @@
     <title>GLAlearning - Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="admin-dashboard.css">
+    <style>
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .search-box {
+            max-width: 300px;
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">GLAlearning</a>
+            <a class="navbar-brand" href="#">
+                <strong>GLAlearning</strong> Admin
+            </a>
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="#" id="logoutBtn">Logout</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            Admin Panel
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="exportStudentData()">Export Data</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="showBulkImport()">Bulk Import</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
+                        </ul>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-5">
-        <h2 class="text-center">Admin Dashboard</h2>
-        <div class="mt-4">
-            <h4>Manage Students</h4>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>GLA Number</th>
-                        <th>Name</th>
-                        <th>Course Applied</th>
-                        <th>Approve Course</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="studentsTable"></tbody>
-            </table>
+    <div class="container-fluid mt-4">
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Students</h5>
+                        <h2 id="totalStudents">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Active Courses</h5>
+                        <h2 id="activeCourses">2</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Enrolled Students</h5>
+                        <h2 id="enrolledStudents">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Avg. Score</h5>
+                        <h2 id="avgScore">0</h2>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="mt-4">
-            <h4>Add New Student</h4>
-            <form id="addStudentForm">
-                <div class="mb-3">
-                    <label for="newGlaNumber" class="form-label">GLA Number</label>
-                    <input type="text" class="form-control" id="newGlaNumber" required>
+
+        <div class="row">
+            <!-- Student Management -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control search-box" id="searchStudents" 
+                                   placeholder="Search students...">
+                            <select class="form-select filter-course" id="filterCourse" title="Filter by course" aria-label="Filter students by course">
+                                <option value="">All Courses</option>
+                                <option value="Coding with Python">Coding with Python</option>
+                                <option value="Using AI to Code">Using AI to Code</option>
+                                <option value="Web Development">Web Development</option>
+                                <option value="Data Science">Data Science</option>
+                            </select>
+                        </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="table table-hover">
+                                <thead class="table-dark sticky-top">
+                                    <tr>
+                                        <th>GLA Number</th>
+                                        <th>Name</th>
+                                        <th>Course</th>
+                                        <th>Progress</th>
+                                        <th>Score</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentsTable">
+                                    <tr>
+                                        <td colspan="6" class="text-center">Loading students...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label for="newPassword" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="newPassword" required>
+            </div>
+
+            <!-- Add/Manage Student -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">Add New Student</h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="addStudentForm">
+                            <div class="mb-3">
+                                <label for="newGlaNumber" class="form-label">GLA Number</label>
+                                <input type="text" class="form-control" id="newGlaNumber" required
+                                       placeholder="e.g., GLA2024001">
+                            </div>
+                            <div class="mb-3">
+                                <label for="newStudentName" class="form-label">Student Name</label>
+                                <input type="text" class="form-control" id="newStudentName" required
+                                       placeholder="Full Name">
+                            </div>
+                            <div class="mb-3">
+                                <label for="newPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="newPassword" required
+                                       placeholder="Default password">
+                                <div class="form-text">Student can change this after first login</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="assignCourse" class="form-label">Assign Course</label>
+                                <select class="form-select" id="assignCourse">
+                                    <option value="">Select Course (Optional)</option>
+                                    <option value="Coding with Python">Coding with Python</option>
+                                    <option value="Using AI to Code">Using AI to Code</option>
+                                    <option value="Web Development">Web Development</option>
+                                    <option value="Data Science">Data Science</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <span class="spinner-border spinner-border-sm d-none me-2"></span>
+                                Add Student
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Add Student</button>
-            </form>
+
+                <!-- Bulk Import -->
+                <div class="card mt-3" id="bulkImportCard" style="display: none;">
+                    <div class="card-header">
+                        <h5 class="mb-0">Bulk Import Students</h5>
+                    </div>
+                    <div class="card-body">
+                        <input type="file" class="form-control mb-3" id="csvFile" accept=".csv">
+                        <div class="form-text mb-3">
+                            CSV format: GLA Number, Name, Password, Course
+                        </div>
+                        <button class="btn btn-success" onclick="processBulkImport()">Import CSV</button>
+                        <button class="btn btn-secondary" onclick="hideBulkImport()">Cancel</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
     <script src="app.js"></script>
     <script>
+        let allStudents = [];
+        
         // Admin Specific Logic
         auth.onAuthStateChanged(user => {
             if (!user) return window.location.href = '/index.html';
@@ -65,22 +201,268 @@
             loadStudents();
         });
 
-        document.getElementById('addStudentForm').addEventListener('submit', (e) => {
+        // Enhanced student loading with better performance
+        async function loadStudents() {
+            try {
+                const snapshot = await db.collection('users').where('role', '==', 'student').get();
+                allStudents = [];
+                
+                snapshot.forEach(doc => {
+                    allStudents.push({ id: doc.id, ...doc.data() });
+                });
+                
+                displayStudents(allStudents);
+                updateStats();
+                
+            } catch (error) {
+                console.error('Error loading students:', error);
+                document.getElementById('studentsTable').innerHTML = 
+                    '<tr><td colspan="6" class="text-center text-danger">Error loading students</td></tr>';
+            }
+        }
+        
+        function displayStudents(students) {
+            const table = document.getElementById('studentsTable');
+            
+            if (students.length === 0) {
+                table.innerHTML = '<tr><td colspan="6" class="text-center">No students found</td></tr>';
+                return;
+            }
+            
+            table.innerHTML = students.map(student => {
+                const progress = student.progress || {};
+                const progressText = getProgressText(progress);
+                const progressClass = getProgressClass(progress);
+                
+                return `
+                    <tr>
+                        <td><strong>${student.glaNumber}</strong></td>
+                        <td>${student.name || 'Not Set'}</td>
+                        <td>
+                            <span class="badge bg-${student.approvedCourse ? 'success' : 'secondary'}">
+                                ${student.approvedCourse || 'Not Assigned'}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar ${progressClass}" style="width: ${getProgressPercentage(progress)}%">
+                                    ${progressText}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-${student.score >= 70 ? 'success' : student.score >= 50 ? 'warning' : 'danger'}">
+                                ${student.score || 'Not taken'}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editStudent('${student.id}')">Edit</button>
+                                <button class="btn btn-outline-success" onclick="assignCourse('${student.id}')">Course</button>
+                                <button class="btn btn-outline-danger" onclick="deleteStudent('${student.id}')">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function getProgressText(progress) {
+            if (progress.testDone) return 'Complete';
+            if (progress.tutorialsDone) return 'Test Pending';
+            if (progress.videosDone) return 'Tutorials';
+            return 'Videos';
+        }
+        
+        function getProgressClass(progress) {
+            if (progress.testDone) return 'bg-success';
+            if (progress.tutorialsDone) return 'bg-warning';
+            if (progress.videosDone) return 'bg-info';
+            return 'bg-secondary';
+        }
+        
+        function getProgressPercentage(progress) {
+            if (progress.testDone) return 100;
+            if (progress.tutorialsDone) return 75;
+            if (progress.videosDone) return 50;
+            return 25;
+        }
+        
+        function updateStats() {
+            document.getElementById('totalStudents').textContent = allStudents.length;
+            
+            const enrolled = allStudents.filter(s => s.approvedCourse).length;
+            document.getElementById('enrolledStudents').textContent = enrolled;
+            
+            const scores = allStudents.filter(s => s.score).map(s => s.score);
+            const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+            document.getElementById('avgScore').textContent = avgScore;
+        }
+
+        // Enhanced add student form
+        document.getElementById('addStudentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const glaNumber = document.getElementById('newGlaNumber').value;
+            
+            const glaNumber = document.getElementById('newGlaNumber').value.trim();
+            const studentName = document.getElementById('newStudentName').value.trim();
             const password = document.getElementById('newPassword').value;
-            const email = `${glaNumber}@glalearning.com`;
-            auth.createUserWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    db.collection('users').doc(userCredential.user.uid).set({
-                        glaNumber,
-                        role: 'student',
-                        progress: { videosDone: false, tutorialsDone: false }
-                    });
-                    loadStudents();
-                })
-                .catch(error => alert(error.message));
+            const assignedCourse = document.getElementById('assignCourse').value;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const spinner = submitBtn.querySelector('.spinner-border');
+            
+            // Validation
+            if (!glaNumber || !studentName || !password) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Show loading
+            submitBtn.disabled = true;
+            spinner.classList.remove('d-none');
+            
+            try {
+                const email = `${glaNumber}@glalearning.com`;
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                
+                const studentData = {
+                    glaNumber,
+                    name: studentName,
+                    role: 'student',
+                    progress: { videosDone: false, tutorialsDone: false, testDone: false },
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: null
+                };
+                
+                if (assignedCourse) {
+                    studentData.approvedCourse = assignedCourse;
+                }
+                
+                await db.collection('users').doc(userCredential.user.uid).set(studentData);
+                
+                // Reset form
+                document.getElementById('addStudentForm').reset();
+                
+                // Reload students
+                await loadStudents();
+                
+                alert(`Student ${studentName} (${glaNumber}) added successfully!`);
+                
+            } catch (error) {
+                console.error('Error adding student:', error);
+                let errorMsg = 'Error adding student';
+                
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMsg = 'A student with this GLA number already exists';
+                }
+                
+                alert(errorMsg);
+            } finally {
+                submitBtn.disabled = false;
+                spinner.classList.add('d-none');
+            }
         });
+        
+        // Search and filter functionality
+        document.getElementById('searchStudents').addEventListener('input', (e) => {
+            filterStudents();
+        });
+        
+        document.getElementById('filterCourse').addEventListener('change', (e) => {
+            filterStudents();
+        });
+        
+        function filterStudents() {
+            const searchTerm = document.getElementById('searchStudents').value.toLowerCase();
+            const courseFilter = document.getElementById('filterCourse').value;
+            
+            const filtered = allStudents.filter(student => {
+                const matchesSearch = !searchTerm || 
+                    student.glaNumber.toLowerCase().includes(searchTerm) ||
+                    (student.name && student.name.toLowerCase().includes(searchTerm));
+                
+                const matchesCourse = !courseFilter || student.approvedCourse === courseFilter;
+                
+                return matchesSearch && matchesCourse;
+            });
+            
+            displayStudents(filtered);
+        }
+        
+        // Bulk import functions
+        function showBulkImport() {
+            document.getElementById('bulkImportCard').style.display = 'block';
+        }
+        
+        function hideBulkImport() {
+            document.getElementById('bulkImportCard').style.display = 'none';
+        }
+        
+        // Export student data
+        function exportStudentData() {
+            const csvContent = "data:text/csv;charset=utf-8," +
+                "GLA Number,Name,Course,Progress,Score,Created\n" +
+                allStudents.map(student => {
+                    const progress = student.progress || {};
+                    return `${student.glaNumber},"${student.name || ''}","${student.approvedCourse || ''}","${getProgressText(progress)}","${student.score || ''}","${student.createdAt ? new Date(student.createdAt.seconds * 1000).toLocaleDateString() : ''}"`;
+                }).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `students_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Enhanced delete with confirmation
+        async function deleteStudent(uid) {
+            const student = allStudents.find(s => s.id === uid);
+            if (!student) return;
+            
+            if (confirm(`Are you sure you want to delete student ${student.name} (${student.glaNumber})?\n\nThis action cannot be undone.`)) {
+                try {
+                    await db.collection('users').doc(uid).delete();
+                    await loadStudents();
+                    alert('Student deleted successfully');
+                } catch (error) {
+                    console.error('Error deleting student:', error);
+                    alert('Error deleting student');
+                }
+            }
+        }
+        
+        // Course assignment modal (simplified)
+        async function assignCourse(uid) {
+            const courses = ['Coding with Python', 'Using AI to Code', 'Web Development', 'Data Science'];
+            const selectedCourse = prompt('Select course:\n' + courses.map((c, i) => `${i+1}. ${c}`).join('\n'));
+            
+            if (selectedCourse && selectedCourse >= 1 && selectedCourse <= courses.length) {
+                try {
+                    await db.collection('users').doc(uid).update({ 
+                        approvedCourse: courses[selectedCourse - 1],
+                        appliedCourse: firebase.firestore.FieldValue.delete()
+                    });
+                    await loadStudents();
+                    alert('Course assigned successfully');
+                } catch (error) {
+                    console.error('Error assigning course:', error);
+                    alert('Error assigning course');
+                }
+            }
+        }
+        
+        function editStudent(uid) {
+            // Simplified edit - in production, you'd want a proper modal
+            const student = allStudents.find(s => s.id === uid);
+            const newName = prompt('Edit student name:', student.name || '');
+            
+            if (newName !== null && newName.trim()) {
+                db.collection('users').doc(uid).update({ name: newName.trim() })
+                    .then(() => loadStudents())
+                    .catch(error => alert('Error updating student'));
+            }
+        }
     </script>
 </body>
 </html>
