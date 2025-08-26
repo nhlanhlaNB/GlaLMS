@@ -1,0 +1,8 @@
+/* public/styles.css (Shared Styles) */
+body { font-family: Arial, sans-serif; }
+.navbar-brand { font-weight: bold; }
+.course-section { margin-top: 20px; }
+.video-player { width: 100%; height: 400px; }
+.chatbot { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; }
+.chatbot input { width: 80%; }
+.hidden { display: none; }

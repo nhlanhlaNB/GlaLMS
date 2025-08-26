@@ -1,0 +1,112 @@
+<!-- public/student-dashboard.html (Student Dashboard Page) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLAlearning - Student Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">GLAlearning</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#" id="logoutBtn">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h2 id="welcomeMsg" class="text-center"></h2>
+        <div id="enrollmentSection" class="course-section">
+            <h3>Enroll in a Course</h3>
+            <p>Select a course to apply for enrollment. Admin will approve.</p>
+            <button class="btn btn-primary" id="applyPython">Apply for Coding with Python</button>
+            <button class="btn btn-primary" id="applyAI">Apply for Using AI to Code</button>
+        </div>
+        <div id="courseContent" class="course-section hidden">
+            <h3 id="courseTitle"></h3>
+            <div id="videosSection">
+                <h4>Videos</h4>
+                <video class="video-player" controls>
+                    <source src="path/to/video.mp4" type="video/mp4">
+                </video>
+                <button class="btn btn-success mt-2" id="markVideosDone">Mark Videos as Done</button>
+            </div>
+            <div id="tutorialsSection" class="hidden">
+                <h4>Tutorials</h4>
+                <p>Complete the following tutorials...</p>
+                <button class="btn btn-success mt-2" id="markTutorialsDone">Mark Tutorials as Done</button>
+            </div>
+            <div id="testSection" class="hidden">
+                <h4>Test</h4>
+                <form id="testForm">
+                    <div class="mb-3">
+                        <label for="q1">Question 1: What is Python?</label>
+                        <input id="q1" name="question1" type="text" class="form-control" placeholder="Type your answer here" title="Answer to Question 1" aria-label="Answer to Question 1">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Test</button>
+                </form>
+            </div>
+            <div id="scoresSection" class="mt-4">
+                <h4>Your Scores</h4>
+                <p id="scoreDisplay"></p>
+            </div>
+            <div class="chatbot mt-4">
+                <div id="chatMessages"></div>
+                <input type="text" id="chatInput" placeholder="Ask a question...">
+                <button id="sendChat">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Student Specific Logic
+        auth.onAuthStateChanged(user => {
+            if (!user) return window.location.href = '/index.html';
+            checkUserRole(user.uid, 'student');
+            loadStudentCourse(user.uid);
+        });
+
+        document.getElementById('applyPython').addEventListener('click', () => applyCourse('Coding with Python'));
+        document.getElementById('applyAI').addEventListener('click', () => applyCourse('Using AI to Code'));
+
+        document.getElementById('markVideosDone').addEventListener('click', () => {
+            const uid = auth.currentUser.uid;
+            db.collection('users').doc(uid).update({ 'progress.videosDone': true });
+            document.getElementById('tutorialsSection').classList.remove('hidden');
+        });
+
+        document.getElementById('markTutorialsDone').addEventListener('click', () => {
+            const uid = auth.currentUser.uid;
+            db.collection('users').doc(uid).update({ 'progress.tutorialsDone': true });
+            document.getElementById('testSection').classList.remove('hidden');
+        });
+
+        document.getElementById('testForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const uid = auth.currentUser.uid;
+            const score = Math.floor(Math.random() * 100); // Placeholder
+            db.collection('users').doc(uid).update({ score });
+            document.getElementById('scoreDisplay').textContent = `Test Score: ${score}`;
+            alert('Test submitted! Score: ' + score);
+        });
+
+        document.getElementById('sendChat').addEventListener('click', () => {
+            const input = document.getElementById('chatInput').value;
+            const messages = document.getElementById('chatMessages');
+            messages.innerHTML += `<p><strong>You:</strong> ${input}</p>`;
+            messages.innerHTML += `<p><strong>Bot:</strong> Placeholder. Integrate xAI API: https://x.ai/api</p>`;
+            document.getElementById('chatInput').value = '';
+        });
+    </script>
+</body>
+</html>
